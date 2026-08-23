@@ -1,7 +1,7 @@
 /* ============================================================
    COZMOS KINGDOM
    An 8-bit style platformer starring Cozmo, the royal pup,
-   on a quest to reclaim the floating kingdom from the Slime King.
+   on a quest to reclaim the floating kingdom from King Fang and his pups.
    ============================================================ */
 
 (() => {
@@ -104,11 +104,19 @@
     }
   }
 
-  const DOG_PALETTE = {
-    K: '#ffd54a', k: '#b8860b',
-    B: '#14100e', F: '#332822', H: '#5a473a',
-    E: '#ffffff', N: '#000000',
-  };
+  // Player skins - all dogs, just different coats. Cycle on the title screen.
+  const SKINS = [
+    { name: 'Cozmo (Classic)', F: '#332822', H: '#5a473a' },
+    { name: 'Golden Pup', F: '#c9922a', H: '#f0c96a' },
+    { name: 'Snow Pup', F: '#dcdce6', H: '#ffffff' },
+    { name: 'Rusty Pup', F: '#8a3a1a', H: '#c9702a' },
+    { name: 'Midnight Pup', F: '#1c1830', H: '#3a3458' },
+  ];
+  let selectedSkin = Math.min(Math.max(Number(localStorage.getItem('cozmos_skin') || 0), 0), SKINS.length - 1);
+  function currentPalette() {
+    const s = SKINS[selectedSkin];
+    return { K: '#ffd54a', k: '#b8860b', B: '#14100e', F: s.F, H: s.H, E: '#ffffff', N: '#000000' };
+  }
   const STAR_COLORS = ['#ffd54a', '#ff6a3a', '#8a3ffc', '#4ad4ff', '#ff4d6d'];
   function starPalette() {
     const c = STAR_COLORS[Math.floor(performance.now() / 90) % STAR_COLORS.length];
@@ -136,35 +144,18 @@
     '.HFFFFFFFFH.', '..FF....FF..', '..FF....FF..', '.FFF....FFF.',
   ];
 
-  const SLIME_PALETTE = { B: '#0d0a1a', P: '#8a3ffc', p: '#c99bff', E: '#ffffff', N: '#000000' };
-  const SLIME_A = ['..PPPPPP..', '.PppppppP.', 'PpPpppPpPP', 'PppEppEppP', 'PppppppppP', 'PppNppNppP', 'BPPPPPPPPB', '.B..BB..B.'];
-  const SLIME_B = ['..........', '..PPPPPP..', '.PppppppP.', 'PpPpppPpPP', 'PppEppEppP', 'PppNppNppP', 'BPPPPPPPPB', '.BB....BB.'];
-
-  const BAT_PALETTE = { B: '#0d0a1a', M: '#c9308a', m: '#ff7ac4', E: '#ffffff' };
-  const BAT_A = ['M.......M.', 'MM.....MM.', '.MMMMMMM..', '.MmEmEmM..', '.MMMMMMM..', '..M...M...'];
-  const BAT_B = ['..........', 'M.......M.', 'MM.MMM.MM.', '.MmEmEmM..', '.MMMMMMM..', '..M...M...'];
-
-  const SENTRY_PALETTE = { B: '#0d0a1a', G: '#3a2a55', g: '#5a4a85', R: '#ff4d6d', W: '#ffffff' };
-  const SENTRY_A = ['..GGGGGG..', '.GggggggG.', 'GgGRRRRgGG', 'GgRWRWRRgG', 'GgGRRRRgGG', '.GggggggG.', '..GGGGGG..', '....BB....'];
-  const SENTRY_B = ['..GGGGGG..', '.GggggggG.', 'GgGgRRgRgG', 'GgRWRWRRgG', 'GgGgRRgRgG', '.GggggggG.', '..GGGGGG..', '....BB....'];
+  // Every character in the kingdom is a dog - enemies just reuse the same
+  // running-dog silhouette as Cozmo, recolored, with their own headgear.
+  const ROGUE_PALETTE = { K: '#3a2a1a', k: '#1a1008', B: '#1a0a08', F: '#8a2a1a', H: '#c9502a', E: '#ffffff', N: '#000000' };
+  const SKY_PALETTE = { K: '#eaffff', k: '#8fd8ff', B: '#1a1a2a', F: '#8fd8ff', H: '#eaffff', E: '#000000', N: '#000000' };
+  const GUARD_PALETTE = { K: '#ff4d6d', k: '#a8324a', B: '#1a1a1a', F: '#c9c9d4', H: '#ffffff', E: '#000000', N: '#000000' };
+  const KINGFANG_PALETTE = { K: '#ffd54a', k: '#8a6b00', B: '#0a0a0a', F: '#2a2430', H: '#4a4058', E: '#ff4d6d', N: '#000000' };
 
   const COIN_PALETTE = { Y: '#ffd54a', y: '#b8860b', W: '#fff6d6' };
   const COIN_FRAMES = [
     ['.YYYY.', 'YYyyYY', 'YyWWyY', 'YyWWyY', 'YYyyYY', '.YYYY.'],
     ['..YY..', '.YyyY.', '.YWWY.', '.YWWY.', '.YyyY.', '..YY..'],
     ['.YYYY.', 'YYyyYY', 'YyWWyY', 'YyWWyY', 'YYyyYY', '.YYYY.'],
-  ];
-
-  const BOSS_PALETTE = { K: '#ffd54a', k: '#8a6b00', B: '#0d0a1a', P: '#5a1a7a', p: '#8a3ffc', E: '#ffffff', N: '#000000' };
-  const BOSS_A = [
-    '....KKKK....', '...KkkkkK...', '..PPPPPPPP..', '.PppppppppP.',
-    'PpPpppppPpPP', 'PppEppppEppP', 'PppppppppppP', 'PppNppppNppP',
-    'BPPPPPPPPPPB', '.B..BBBB..B.',
-  ];
-  const BOSS_B = [
-    '............', '....KKKK....', '...KkkkkK...', '..PPPPPPPP..',
-    '.PppppppppP.', 'PpPpppppPpPP', 'PppEppppEppP', 'PppNppppNppP',
-    'BPPPPPPPPPPB', '.BB......BB.',
   ];
 
   const POWERUP_COLORS = { star: '#ffd54a', wing: '#8fd8ff', heart: '#ff4d6d', shield: '#4ad4ff' };
@@ -368,7 +359,7 @@
   function buildLevel6() {
     const g1 = ground(0, 900), sideL = plat(120, GROUND_Y - 90, 80), sideR = plat(700, GROUND_Y - 90, 80);
     return {
-      name: "Slime King's Throne", theme: THEME.THRONE, width: 900, start: { x: 40, y: GROUND_Y - 40 },
+      name: "King Fang's Throne", theme: THEME.THRONE, width: 900, start: { x: 40, y: GROUND_Y - 40 },
       platforms: [g1, sideL, sideR], moving: [], enemies: [], hazards: [],
       powerups: [{ x: 440, y: GROUND_Y - 50, type: 'heart' }],
       checkpoints: [], coins: [],
@@ -608,7 +599,7 @@
       const drawY = this.y + this.h - spriteH;
       const feetX = this.x - camX + this.w / 2;
       const feetY = this.y + this.h;
-      const palette = this.starTimer > 0 ? starPalette() : DOG_PALETTE;
+      const palette = this.starTimer > 0 ? starPalette() : currentPalette();
       ctx.save();
       ctx.translate(feetX, feetY);
       ctx.scale(this.scaleX, this.scaleY);
@@ -626,14 +617,14 @@
     get rect() { return { x: this.x, y: this.y, w: this.w, h: this.h }; }
   }
 
-  // ---------- Enemy (slime / flyer / shooter) ----------
+  // ---------- Enemy: Rogue Pup (ground) / Sky Pup (flyer) / Guard Pup (shooter) ----------
   class Enemy {
     constructor(x, y, range, type = 'slime') {
       this.type = type;
       this.startX = x; this.x = x;
       this.startY = y; this.y = y;
-      this.w = type === 'flyer' ? 22 : 26;
-      this.h = type === 'shooter' ? 24 : 20;
+      this.w = type === 'flyer' ? 24 : type === 'shooter' ? 28 : 26;
+      this.h = type === 'shooter' ? 26 : type === 'flyer' ? 22 : 24;
       this.range = range || 0;
       this.dir = 1;
       this.speed = type === 'flyer' ? 1.0 + Math.random() * 0.3 : 0.8 + Math.random() * 0.4;
@@ -669,15 +660,19 @@
     draw() {
       if (!this.alive) return;
       const squishOffset = this.squish > 0 ? 4 : 0;
+      const sx = this.x - camX;
+      const sy = this.y + squishOffset;
+      const frame = Math.floor(this.animTimer / (this.type === 'shooter' ? 20 : this.type === 'flyer' ? 10 : 16)) % 2 === 0 ? DOG_RUN_A : DOG_RUN_B;
       if (this.type === 'flyer') {
-        const frame = Math.floor(this.animTimer / 10) % 2 === 0 ? BAT_A : BAT_B;
-        drawSprite(frame, BAT_PALETTE, this.x - camX, this.y + squishOffset, 2.6, this.dir < 0);
+        const flap = Math.sin(this.animTimer * 0.5) * 4;
+        ctx.fillStyle = SKY_PALETTE.k;
+        ctx.beginPath(); ctx.ellipse(sx + 2, sy + 14 - flap, 7, 4, -0.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(sx + this.w - 2, sy + 14 + flap, 7, 4, 0.5, 0, Math.PI * 2); ctx.fill();
+        drawSprite(frame, SKY_PALETTE, sx, sy, 2.0, this.dir < 0);
       } else if (this.type === 'shooter') {
-        const frame = Math.floor(this.animTimer / 14) % 2 === 0 ? SENTRY_A : SENTRY_B;
-        drawSprite(frame, SENTRY_PALETTE, this.x - camX, this.y + squishOffset, 2.6);
+        drawSprite(frame, GUARD_PALETTE, sx, sy, 2.3);
       } else {
-        const frame = Math.floor(this.animTimer / 16) % 2 === 0 ? SLIME_A : SLIME_B;
-        drawSprite(frame, SLIME_PALETTE, this.x - camX, this.y + squishOffset, 2.6, this.dir < 0);
+        drawSprite(frame, ROGUE_PALETTE, sx, sy, 2.1, this.dir < 0);
       }
     }
   }
@@ -688,11 +683,19 @@
     update() { this.x += this.vx; this.life--; }
     get rect() { return { x: this.x - this.w / 2, y: this.y - this.h / 2, w: this.w, h: this.h }; }
     draw() {
+      // Guard Pups fling tennis balls, not lasers.
       const sx = this.x - camX;
-      ctx.fillStyle = '#ff6a6a';
-      ctx.beginPath(); ctx.arc(sx, this.y, 5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#ffd0d0';
-      ctx.beginPath(); ctx.arc(sx - 1, this.y - 1, 2, 0, Math.PI * 2); ctx.fill();
+      const spin = this.x * 0.15;
+      ctx.save();
+      ctx.translate(sx, this.y);
+      ctx.rotate(spin);
+      ctx.fillStyle = '#c9e04a';
+      ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(0, 0, 5, -0.6, 1.4); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, 5, 2.5, 4.5); ctx.stroke();
+      ctx.restore();
     }
   }
 
@@ -732,7 +735,7 @@
           this.cycle++;
           if (this.cycle % 2 === 0) {
             const spawnX = this.x < this.startX ? this.x + 180 : this.x - 180;
-            world.enemies.push(new Enemy(Math.max(20, spawnX), GROUND_Y - 20, 60, 'slime'));
+            world.enemies.push(new Enemy(Math.max(20, spawnX), GROUND_Y - 24, 60, 'slime'));
           }
         }
       } else if (this.state === 'slam') {
@@ -748,7 +751,7 @@
       this.invuln = 70;
       hitStopTimer = 6;
       shake = 10;
-      spawnParticles(this.x + this.w / 2, this.y + this.h / 2, '#c99bff', 20);
+      spawnParticles(this.x + this.w / 2, this.y + this.h / 2, '#ff4d6d', 20);
       AudioFX.bossHit();
       if (this.hp <= 0) {
         this.alive = false;
@@ -770,8 +773,8 @@
         ctx.fill();
       }
       if (this.invuln > 0 && this.invuln % 6 < 3) return;
-      const frame = Math.floor(this.animTimer / 16) % 2 === 0 ? BOSS_A : BOSS_B;
-      drawSprite(frame, BOSS_PALETTE, sx, this.y, 5.3, this.dir < 0);
+      const frame = Math.floor(this.animTimer / 16) % 2 === 0 ? DOG_RUN_A : DOG_RUN_B;
+      drawSprite(frame, KINGFANG_PALETTE, sx, this.y, 5.3, this.dir < 0);
     }
   }
 
@@ -871,6 +874,16 @@
     if (frameKeys['KeyM']) Music.toggle();
 
     if (state === STATE.TITLE) {
+      if (frameKeys['ArrowLeft'] || frameKeys['KeyA']) {
+        selectedSkin = (selectedSkin - 1 + SKINS.length) % SKINS.length;
+        localStorage.setItem('cozmos_skin', String(selectedSkin));
+        AudioFX.select();
+      }
+      if (frameKeys['ArrowRight'] || frameKeys['KeyD']) {
+        selectedSkin = (selectedSkin + 1) % SKINS.length;
+        localStorage.setItem('cozmos_skin', String(selectedSkin));
+        AudioFX.select();
+      }
       if (frameKeys['Enter'] || frameKeys['Space']) startGame();
       return;
     }
@@ -1259,7 +1272,7 @@
       ctx.fillStyle = '#ffd54a';
       ctx.font = '8px "Press Start 2P", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('SLIME KING', W / 2, 46);
+      ctx.fillText('KING FANG', W / 2, 46);
       ctx.textAlign = 'left';
     }
   }
@@ -1362,25 +1375,29 @@
   function drawTitleScreen() {
     const cell = 4;
     const bob = Math.sin(performance.now() / 300) * 4;
-    drawSprite(DOG_RUN_A, DOG_PALETTE, W / 2 - 24, 120 + bob, cell);
+    drawSprite(DOG_RUN_A, currentPalette(), W / 2 - 24, 88 + bob, cell);
 
-    centerText([{ text: 'COZMOS KINGDOM', size: 20 }], 36, 20, '#ffd54a');
+    centerText([{ text: 'COZMOS KINGDOM', size: 20 }], 30, 20, '#ffd54a');
+
+    centerText([{ text: '◀  ' + SKINS[selectedSkin].name.toUpperCase() + '  ▶', size: 9, color: '#8fd8ff' }], 150, 9);
 
     centerText([
-      { text: 'The Slime King stole the crown!', size: 8, color: '#e6e0ff' },
-      { text: 'Cross 6 sky-kingdoms, dodge foes,', size: 8, color: '#e6e0ff' },
-      { text: 'grab power-ups, and beat the boss!', size: 8, color: '#e6e0ff' },
-    ], 200, 8, '#e6e0ff', 13);
+      { text: 'King Fang and his rogue pups', size: 7, color: '#e6e0ff' },
+      { text: 'stole the crown! Cross 6 sky-', size: 7, color: '#e6e0ff' },
+      { text: 'kingdoms and beat the boss!', size: 7, color: '#e6e0ff' },
+    ], 170, 7, '#e6e0ff', 12);
 
     const blink = Math.floor(performance.now() / 500) % 2 === 0;
-    if (blink) centerText([{ text: 'PRESS ENTER TO START', size: 11 }], 250, 11, '#ffd54a');
+    if (blink) centerText([{ text: 'PRESS ENTER TO START', size: 11 }], 212, 11, '#ffd54a');
 
     ctx.textAlign = 'center';
     ctx.font = '8px "Press Start 2P", monospace';
     ctx.fillStyle = '#a9e0ff';
-    ctx.fillText('BEST SCORE: ' + highScore.val, W / 2, 266);
+    ctx.fillText('BEST SCORE: ' + highScore.val, W / 2, 234);
     ctx.fillStyle = '#8fd8ff';
-    ctx.fillText('M: MUSIC   P: PAUSE', W / 2, 278);
+    ctx.font = '7px "Press Start 2P", monospace';
+    ctx.fillText('ARROWS: CHANGE SKIN', W / 2, 250);
+    ctx.fillText('M: MUSIC   P: PAUSE', W / 2, 262);
     ctx.textAlign = 'left';
   }
 

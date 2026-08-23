@@ -1,0 +1,97 @@
+* { box-sizing: border-box; }
+
+:root {
+  --ink: #0d0a1a;
+  --panel: #1a1430;
+  --gold: #ffd54a;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: radial-gradient(ellipse at center, #241b45 0%, #0d0a1a 70%);
+  color: #f4f1ff;
+  font-family: 'Press Start 2P', monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#game-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+}
+
+#title-banner {
+  font-size: 22px;
+  margin: 0;
+  color: var(--gold);
+  text-shadow: 3px 3px 0 #7a4a00, 0 0 12px rgba(255, 213, 74, 0.5);
+  letter-spacing: 2px;
+}
+
+canvas {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  width: min(90vw, 1024px);
+  height: auto;
+  aspect-ratio: 512 / 288;
+  background: #000;
+  border: 6px solid #4a3c7a;
+  border-radius: 4px;
+  box-shadow: 0 0 0 3px #0d0a1a, 0 0 28px rgba(120, 90, 255, 0.35), inset 0 0 20px rgba(0,0,0,0.6);
+}
+
+#hint {
+  font-size: 9px;
+  color: #b9b0e0;
+  text-align: center;
+  line-height: 1.6;
+}
+
+#touch-controls {
+  display: none;
+  width: 100%;
+  max-width: 512px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  user-select: none;
+}
+
+.touch-row {
+  display: flex;
+  gap: 10px;
+}
+
+.touch-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  border: 3px solid #4a3c7a;
+  background: #2a2050;
+  color: var(--gold);
+  touch-action: manipulation;
+}
+
+.touch-btn:active {
+  background: #4a3c7a;
+}
+
+.touch-jump {
+  width: 96px;
+  font-size: 10px;
+}
+
+@media (pointer: coarse) {
+  #touch-controls { display: flex; }
+  #hint { display: none; }
+}

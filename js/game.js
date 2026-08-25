@@ -218,7 +218,7 @@
   // ---------- World constants ----------
   const GRAVITY = 0.62;
   const MOVE_SPEED = 2.3;
-  const JUMP_VELOCITY = -11;
+  const JUMP_VELOCITY = -13;
   const FRICTION = 0.82;
   const COYOTE_FRAMES = 6;
   const JUMP_BUFFER_FRAMES = 7;

@@ -7,6 +7,14 @@
 (() => {
   'use strict';
 
+  // ---------- Safe storage (some sandboxed/embedded contexts throw on access) ----------
+  function safeGet(key, fallback) {
+    try { const v = localStorage.getItem(key); return v === null ? fallback : v; } catch (e) { return fallback; }
+  }
+  function safeSet(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { /* storage unavailable, ignore */ }
+  }
+
   // ---------- Canvas setup ----------
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
@@ -112,7 +120,7 @@
     { name: 'Rusty Pup', F: '#8a3a1a', H: '#c9702a' },
     { name: 'Midnight Pup', F: '#1c1830', H: '#3a3458' },
   ];
-  let selectedSkin = Math.min(Math.max(Number(localStorage.getItem('cozmos_skin') || 0), 0), SKINS.length - 1);
+  let selectedSkin = Math.min(Math.max(Number(safeGet('cozmos_skin', 0)), 0), SKINS.length - 1);
   function currentPalette() {
     const s = SKINS[selectedSkin];
     return { K: '#ffd54a', k: '#b8860b', B: '#14100e', F: s.F, H: s.H, E: '#ffffff', N: '#000000' };
@@ -187,6 +195,20 @@
   bindTouch('btn-left', 'ArrowLeft');
   bindTouch('btn-right', 'ArrowRight');
   bindTouch('btn-jump', 'Space');
+  bindTouch('btn-pause', 'KeyP');
+
+  // Games embedded in a sandboxed frame don't get keyboard focus until
+  // something inside them is clicked, so make the canvas itself the primary
+  // "press start" control instead of depending on a keypress alone.
+  canvas.addEventListener('click', () => {
+    AudioFX.unlock();
+    canvas.focus();
+    if (state === STATE.TITLE) startGame();
+    else if ((state === STATE.GAME_OVER || state === STATE.WIN) && stateTimer > 30) startGame();
+    else if (state === STATE.PAUSED) state = STATE.PLAYING;
+  });
+  window.addEventListener('load', () => canvas.focus());
+  canvas.focus();
 
   // ---------- World constants ----------
   const GRAVITY = 0.62;
@@ -381,7 +403,7 @@
   let hitStopTimer = 0;
   let particles = [];
   let stars = [];
-  const highScore = { val: Number(localStorage.getItem('cozmos_highscore') || 0) };
+  const highScore = { val: Number(safeGet('cozmos_highscore', 0)) };
   const debugLevel = parseInt(new URLSearchParams(location.search).get('level'), 10);
 
   function makeStars() {
@@ -847,7 +869,7 @@
     AudioFX.gameOver();
     if (player.score > highScore.val) {
       highScore.val = player.score;
-      localStorage.setItem('cozmos_highscore', String(highScore.val));
+      safeSet('cozmos_highscore', String(highScore.val));
     }
   }
 
@@ -858,7 +880,7 @@
       stateTimer = 0;
       if (player.score > highScore.val) {
         highScore.val = player.score;
-        localStorage.setItem('cozmos_highscore', String(highScore.val));
+        safeSet('cozmos_highscore', String(highScore.val));
       }
     } else {
       loadLevel(levelIndex);
@@ -876,12 +898,12 @@
     if (state === STATE.TITLE) {
       if (frameKeys['ArrowLeft'] || frameKeys['KeyA']) {
         selectedSkin = (selectedSkin - 1 + SKINS.length) % SKINS.length;
-        localStorage.setItem('cozmos_skin', String(selectedSkin));
+        safeSet('cozmos_skin', String(selectedSkin));
         AudioFX.select();
       }
       if (frameKeys['ArrowRight'] || frameKeys['KeyD']) {
         selectedSkin = (selectedSkin + 1) % SKINS.length;
-        localStorage.setItem('cozmos_skin', String(selectedSkin));
+        safeSet('cozmos_skin', String(selectedSkin));
         AudioFX.select();
       }
       if (frameKeys['Enter'] || frameKeys['Space']) startGame();
@@ -1339,7 +1361,7 @@
 
     if (state === STATE.PAUSED) {
       drawOverlayPanel();
-      centerText([{ text: 'PAUSED', size: 20 }, { text: 'PRESS P TO RESUME', size: 9, color: '#f4f1ff' }], H / 2 - 20, 20, '#ffd54a', 30);
+      centerText([{ text: 'PAUSED', size: 20 }, { text: 'CLICK OR PRESS P TO RESUME', size: 9, color: '#f4f1ff' }], H / 2 - 20, 20, '#ffd54a', 30);
     }
     if (state === STATE.LEVEL_DONE) {
       drawOverlayPanel();
@@ -1355,7 +1377,7 @@
         { text: 'GAME OVER', size: 20 },
         { text: 'SCORE ' + player.score, size: 10, color: '#f4f1ff' },
         { text: 'BEST ' + highScore.val, size: 10, color: '#a9e0ff' },
-        { text: 'PRESS ENTER TO RETRY', size: 9, color: '#ffd54a' },
+        { text: 'CLICK TO RETRY', size: 9, color: '#ffd54a' },
       ], H / 2 - 40, 20, '#ff4d6d', 26);
     }
     if (state === STATE.WIN) {
@@ -1365,7 +1387,7 @@
         { text: 'COZMO WEARS THE CROWN', size: 9, color: '#a9e0ff' },
         { text: 'SCORE ' + player.score, size: 10, color: '#f4f1ff' },
         { text: 'BEST ' + highScore.val, size: 10, color: '#f4f1ff' },
-        { text: 'PRESS ENTER TO PLAY AGAIN', size: 9, color: '#ffd54a' },
+        { text: 'CLICK TO PLAY AGAIN', size: 9, color: '#ffd54a' },
       ], H / 2 - 60, 18, '#ffd54a', 26);
     }
 
@@ -1388,7 +1410,7 @@
     ], 170, 7, '#e6e0ff', 12);
 
     const blink = Math.floor(performance.now() / 500) % 2 === 0;
-    if (blink) centerText([{ text: 'PRESS ENTER TO START', size: 11 }], 212, 11, '#ffd54a');
+    if (blink) centerText([{ text: 'CLICK OR TAP TO START', size: 11 }], 212, 11, '#ffd54a');
 
     ctx.textAlign = 'center';
     ctx.font = '8px "Press Start 2P", monospace';

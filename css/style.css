@@ -46,6 +46,7 @@ canvas {
   border: 6px solid #4a3c7a;
   border-radius: 4px;
   box-shadow: 0 0 0 3px #0d0a1a, 0 0 28px rgba(120, 90, 255, 0.35), inset 0 0 20px rgba(0,0,0,0.6);
+  cursor: pointer;
 }
 
 #hint {
@@ -56,7 +57,7 @@ canvas {
 }
 
 #touch-controls {
-  display: none;
+  display: flex;
   width: 100%;
   max-width: 512px;
   justify-content: space-between;
@@ -80,6 +81,11 @@ canvas {
   background: #2a2050;
   color: var(--gold);
   touch-action: manipulation;
+  cursor: pointer;
+}
+
+.touch-btn:hover {
+  background: #3a2c66;
 }
 
 .touch-btn:active {
@@ -91,7 +97,8 @@ canvas {
   font-size: 10px;
 }
 
-@media (pointer: coarse) {
-  #touch-controls { display: flex; }
-  #hint { display: none; }
+#btn-pause {
+  width: 56px;
+  height: 56px;
+  font-size: 18px;
 }

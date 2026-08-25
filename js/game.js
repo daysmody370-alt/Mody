@@ -200,13 +200,18 @@
   // Games embedded in a sandboxed frame don't get keyboard focus until
   // something inside them is clicked, so make the canvas itself the primary
   // "press start" control instead of depending on a keypress alone.
-  canvas.addEventListener('click', () => {
+  function activateCanvas() {
     AudioFX.unlock();
     canvas.focus();
     if (state === STATE.TITLE) startGame();
     else if ((state === STATE.GAME_OVER || state === STATE.WIN) && stateTimer > 30) startGame();
     else if (state === STATE.PAUSED) state = STATE.PLAYING;
-  });
+  }
+  canvas.addEventListener('click', activateCanvas);
+  // iOS Safari can be sluggish or unreliable dispatching the synthetic
+  // click after a tap inside an embedded frame, so respond to the raw touch
+  // directly too. preventDefault stops the follow-up click from double-firing.
+  canvas.addEventListener('touchend', (e) => { e.preventDefault(); activateCanvas(); }, { passive: false });
   window.addEventListener('load', () => canvas.focus());
   canvas.focus();
 

@@ -1,4 +1,8 @@
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
 
 :root {
   --ink: #0d0a1a;
@@ -17,6 +21,9 @@ html, body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 #game-wrap {
@@ -39,7 +46,13 @@ canvas {
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
-  width: min(90vw, 1024px);
+  /* Constrained by both viewport width AND height, so the always-visible
+     touch controls never get squeezed off-screen on a tablet in landscape.
+     The svh version is layered after as a progressive enhancement - if a
+     browser doesn't understand it, this whole declaration is dropped and
+     the vh-based one above still applies. */
+  width: min(90vw, 1024px, calc(58vh * 512 / 288));
+  width: min(90vw, 1024px, calc(58svh * 512 / 288));
   height: auto;
   aspect-ratio: 512 / 288;
   background: #000;
@@ -47,6 +60,7 @@ canvas {
   border-radius: 4px;
   box-shadow: 0 0 0 3px #0d0a1a, 0 0 28px rgba(120, 90, 255, 0.35), inset 0 0 20px rgba(0,0,0,0.6);
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 #hint {

@@ -217,7 +217,7 @@
 
   // ---------- World constants ----------
   const GRAVITY = 0.62;
-  const MOVE_SPEED = 3.0;
+  const MOVE_SPEED = 6.5;
   const JUMP_VELOCITY = -14;
   const FRICTION = 0.82;
   const COYOTE_FRAMES = 6;
@@ -507,8 +507,8 @@
       const jumpPressed = frameKeys['Space'] || frameKeys['ArrowUp'] || frameKeys['KeyW'];
 
       const speedMul = this.starTimer > 0 ? 1.35 : 1;
-      if (left) { this.vx -= 0.75 * speedMul; this.facing = -1; }
-      if (right) { this.vx += 0.75 * speedMul; this.facing = 1; }
+      if (left) { this.vx -= 1.6 * speedMul; this.facing = -1; }
+      if (right) { this.vx += 1.6 * speedMul; this.facing = 1; }
       this.vx *= FRICTION;
       const maxSpeed = MOVE_SPEED * speedMul;
       if (Math.abs(this.vx) > maxSpeed) this.vx = maxSpeed * Math.sign(this.vx);
@@ -1067,7 +1067,7 @@
     if (shake > 0) shake--;
 
     const targetCam = player.x - W / 2;
-    camX += (targetCam - camX) * 0.15;
+    camX += (targetCam - camX) * 0.22;
     camX = Math.max(0, Math.min(camX, world.width - W));
   }
 

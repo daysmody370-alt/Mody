@@ -22,12 +22,13 @@
   const H = canvas.height;
   const GROUND_Y = H - 32;
 
-  // Render at native device pixel density instead of leaving the fixed
-  // 512x288 backing store to be stretched by CSS - on a Retina/high-DPI
-  // screen that non-integer stretch makes pixel art look shimmery rather
-  // than crisp. Resizing canvas.width/height resets context state, so this
-  // must happen before imageSmoothingEnabled is set below.
-  const DPR = Math.min(window.devicePixelRatio || 1, 3);
+  // Render well above the fixed 512x288 logical resolution instead of
+  // leaving it to be stretched by CSS. A plain devicePixelRatio match isn't
+  // enough on its own - a 4K monitor at 100% OS scaling still reports
+  // DPR 1, so floor the render scale at 2x regardless, and let genuinely
+  // high-DPI screens go up to 4x. Resizing canvas.width/height resets
+  // context state, so this must happen before imageSmoothingEnabled below.
+  const DPR = Math.min(Math.max(window.devicePixelRatio || 1, 2), 4);
   canvas.width = W * DPR;
   canvas.height = H * DPR;
   ctx.imageSmoothingEnabled = false;
@@ -60,6 +61,7 @@
       unlock: ctxReady,
       jump: () => tone(330, 0.12, 'square', 0.09, 0, 520),
       doubleJump: () => tone(500, 0.1, 'square', 0.08, 0, 760),
+      skid: () => tone(320, 0.09, 'sawtooth', 0.05, 0, 180),
       coin: () => { tone(880, 0.07, 'square', 0.08); tone(1320, 0.09, 'square', 0.07, 0.06); },
       stomp: () => tone(180, 0.15, 'square', 0.1, 0, 60),
       hurt: () => tone(140, 0.25, 'sawtooth', 0.12, 0, 40),
@@ -160,6 +162,18 @@
     '....kkkk....', '...kBBBBk...', '..FFFFFFFF..', '.FFFFFFFFFF.',
     'BFFFFFFFFFFB', 'BFFNFFFFFNFB', 'BFFFFFFFFFFB', '.HFFFFFFFFH.',
     '.HFFFFFFFFH.', '..FF....FF..', '..FF....FF..', '.FFF....FFF.',
+  ];
+  // Falling has its legs reaching down (vs. tucked-up on the way up), and
+  // skidding is a wide, low, braced stance for a hard direction change at speed.
+  const DOG_FALL = [
+    '....KKKK....', '...KkkkkK...', '..FFFFFFFF..', '.FFFFFFFFFF.',
+    'BFFFFFFFFFFB', 'BFFEFFFFFNFB', 'BFFFFFFFFFFB', '.HFFFFFFFFH.',
+    '.HFFFFFFFFH.', '.FF......FF.', '.FF......FF.', '............',
+  ];
+  const DOG_SKID = [
+    '....KKKK....', '...KkkkkK...', '..FFFFFFFF..', '.FFFFFFFFFF.',
+    'BFFFFFFFFFFB', 'BFFEFFFFFNFB', 'BFFFFFFFFFFB', '.HFFFFFFFFH.',
+    'HFFFFFFFFFFH', 'FF........FF', '............', '............',
   ];
 
   // Every character in the kingdom is a dog - enemies just reuse the same
@@ -485,6 +499,8 @@
       this.shield = false;
       this.scaleX = 1; this.scaleY = 1;
       this.dustCooldown = 0;
+      this.skidding = false;
+      this.idleTimer = 0;
     }
     reset() {
       this.lives = 3; this.score = 0; this.vx = 0; this.vy = 0; this.invuln = 0;
@@ -517,6 +533,12 @@
       const jumpPressed = frameKeys['Space'] || frameKeys['ArrowUp'] || frameKeys['KeyW'];
 
       const speedMul = this.starTimer > 0 ? 1.35 : 1;
+      const wasSkidding = this.skidding;
+      this.skidding = this.onGround && ((this.vx > 2.5 && left && !right) || (this.vx < -2.5 && right && !left));
+      if (this.skidding && !wasSkidding) {
+        spawnParticles(this.x + this.w / 2, this.y + this.h - 2, '#c9c0e0', 10);
+        AudioFX.skid();
+      }
       if (left) { this.vx -= 1.6 * speedMul; this.facing = -1; }
       if (right) { this.vx += 1.6 * speedMul; this.facing = 1; }
       this.vx *= FRICTION;
@@ -608,9 +630,12 @@
       }
       if (this.dustCooldown > 0) this.dustCooldown--;
 
-      if (Math.abs(this.vx) > 0.3 && this.onGround) {
+      if (Math.abs(this.vx) > 0.3 && this.onGround && !this.skidding) {
         this.animTimer++;
-        if (this.animTimer > 8) {
+        // Legs cycle faster the faster Cozmo is actually moving, instead of
+        // a fixed cadence that looks disconnected from speed at high vx.
+        const cycleLen = Math.max(3, 9 - Math.abs(this.vx) * 0.9);
+        if (this.animTimer > cycleLen) {
           this.animTimer = 0;
           this.animFrame = 1 - this.animFrame;
           if (this.dustCooldown <= 0) {
@@ -618,13 +643,16 @@
             this.dustCooldown = 6;
           }
         }
-      } else if (this.onGround) {
+      } else if (this.onGround && !this.skidding) {
         this.animFrame = 0;
+        this.idleTimer++;
       }
+      if (!this.onGround || Math.abs(this.vx) > 0.3) this.idleTimer = 0;
     }
     get sprite() {
       if (this.hurtFlash > 0 && this.hurtFlash % 8 < 4) return DOG_HURT;
-      if (!this.onGround) return DOG_JUMP;
+      if (this.skidding) return DOG_SKID;
+      if (!this.onGround) return this.vy < 0 ? DOG_JUMP : DOG_FALL;
       return this.animFrame === 0 ? DOG_RUN_A : DOG_RUN_B;
     }
     draw() {
@@ -633,7 +661,8 @@
       const spriteW = 12 * cell;
       const spriteH = 12 * cell;
       const drawX = this.x - camX + (this.w - spriteW) / 2;
-      const drawY = this.y + this.h - spriteH;
+      const idleBob = this.idleTimer > 30 ? Math.sin(this.idleTimer * 0.06) * 1.4 : 0;
+      const drawY = this.y + this.h - spriteH + idleBob;
       const feetX = this.x - camX + this.w / 2;
       const feetY = this.y + this.h;
       const palette = this.starTimer > 0 ? starPalette() : currentPalette();

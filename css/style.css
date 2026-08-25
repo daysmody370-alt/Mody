@@ -51,8 +51,8 @@ canvas {
      The svh version is layered after as a progressive enhancement - if a
      browser doesn't understand it, this whole declaration is dropped and
      the vh-based one above still applies. */
-  width: min(90vw, 1024px, calc(58vh * 512 / 288));
-  width: min(90vw, 1024px, calc(58svh * 512 / 288));
+  width: min(90vw, 1280px, calc(58vh * 512 / 288));
+  width: min(90vw, 1280px, calc(58svh * 512 / 288));
   height: auto;
   aspect-ratio: 512 / 288;
   background: #000;

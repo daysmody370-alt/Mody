@@ -18,10 +18,20 @@
   // ---------- Canvas setup ----------
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-  const W = canvas.width;
+  const W = canvas.width;  // logical game resolution - all game logic and level layouts use this
   const H = canvas.height;
   const GROUND_Y = H - 32;
+
+  // Render at native device pixel density instead of leaving the fixed
+  // 512x288 backing store to be stretched by CSS - on a Retina/high-DPI
+  // screen that non-integer stretch makes pixel art look shimmery rather
+  // than crisp. Resizing canvas.width/height resets context state, so this
+  // must happen before imageSmoothingEnabled is set below.
+  const DPR = Math.min(window.devicePixelRatio || 1, 3);
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  ctx.imageSmoothingEnabled = false;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
   // ---------- Audio (synthesized, no assets) ----------
   const AudioFX = (() => {
